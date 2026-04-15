@@ -1,0 +1,27 @@
+# Large event log CSV files (too big for GitHub)
+BPIC17_no_loop.csv
+bpic17_with_loops.csv
+BPIC19.csv
+luggage_log.csv
+
+# Preprocessed tensor output folders
+BPIC_17/
+BPIC_17_DR/
+BPIC_19/
+BAC_OG/
+BAC_adj/
+BAC_dep/
+BAC/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
