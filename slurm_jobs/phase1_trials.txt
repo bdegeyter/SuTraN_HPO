@@ -1,0 +1,112 @@
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 4 --seed 42 --num_heads 1
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 8 --seed 42 --num_heads 2
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 16 --seed 42 --num_heads 4
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 24 --seed 42 --num_heads 6
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 32 --seed 42 --num_heads 8
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 48 --seed 42 --num_heads 12
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 64 --seed 42 --num_heads 16
+--model_type DA --dataset BAC_adj --hp_name d_model --d_model 128 --seed 42 --num_heads 32
+--model_type DA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 1 --seed 42
+--model_type DA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 2 --seed 42
+--model_type DA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 3 --seed 42
+--model_type DA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 4 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_layers --num_layers 1 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_layers --num_layers 2 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_layers --num_layers 4 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_layers --num_layers 6 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_layers --num_layers 8 --seed 42
+--model_type DA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0002 --seed 42
+--model_type DA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0004 --seed 42
+--model_type DA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0008 --seed 42
+--model_type DA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.001 --seed 42
+--model_type DA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.005 --seed 42
+--model_type DA --dataset BAC_adj --hp_name dropout --dropout 0 --seed 42
+--model_type DA --dataset BAC_adj --hp_name dropout --dropout 0.2 --seed 42
+--model_type DA --dataset BAC_adj --hp_name dropout --dropout 0.5 --seed 42
+--model_type DA --dataset BAC_adj --hp_name dropout --dropout 0.8 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_heads --num_heads 8 --seed 42
+--model_type DA --dataset BAC_adj --hp_name num_heads --num_heads 16 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 4 --seed 42 --num_heads 1
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 8 --seed 42 --num_heads 2
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 16 --seed 42 --num_heads 4
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 24 --seed 42 --num_heads 6
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 32 --seed 42 --num_heads 8
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 48 --seed 42 --num_heads 12
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 64 --seed 42 --num_heads 16
+--model_type NDA --dataset BAC_adj --hp_name d_model --d_model 128 --seed 42 --num_heads 32
+--model_type NDA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 1 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 2 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 3 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name d_ff_multiplier --d_ff_multiplier 4 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_layers --num_layers 1 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_layers --num_layers 2 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_layers --num_layers 4 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_layers --num_layers 6 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_layers --num_layers 8 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0002 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0004 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.0008 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.001 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name learning_rate --learning_rate 0.005 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name dropout --dropout 0 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name dropout --dropout 0.2 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name dropout --dropout 0.5 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name dropout --dropout 0.8 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_heads --num_heads 8 --seed 42
+--model_type NDA --dataset BAC_adj --hp_name num_heads --num_heads 16 --seed 42
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 4 --seed 42 --num_heads 1
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 8 --seed 42 --num_heads 2
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 16 --seed 42 --num_heads 4
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 24 --seed 42 --num_heads 6
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 32 --seed 42 --num_heads 8
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 48 --seed 42 --num_heads 12
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 64 --seed 42 --num_heads 16
+--model_type DA --dataset BAC_OG --hp_name d_model --d_model 128 --seed 42 --num_heads 32
+--model_type DA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 1 --seed 42
+--model_type DA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 2 --seed 42
+--model_type DA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 3 --seed 42
+--model_type DA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 4 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_layers --num_layers 1 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_layers --num_layers 2 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_layers --num_layers 4 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_layers --num_layers 6 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_layers --num_layers 8 --seed 42
+--model_type DA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0002 --seed 42
+--model_type DA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0004 --seed 42
+--model_type DA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0008 --seed 42
+--model_type DA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.001 --seed 42
+--model_type DA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.005 --seed 42
+--model_type DA --dataset BAC_OG --hp_name dropout --dropout 0 --seed 42
+--model_type DA --dataset BAC_OG --hp_name dropout --dropout 0.2 --seed 42
+--model_type DA --dataset BAC_OG --hp_name dropout --dropout 0.5 --seed 42
+--model_type DA --dataset BAC_OG --hp_name dropout --dropout 0.8 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_heads --num_heads 8 --seed 42
+--model_type DA --dataset BAC_OG --hp_name num_heads --num_heads 16 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 4 --seed 42 --num_heads 1
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 8 --seed 42 --num_heads 2
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 16 --seed 42 --num_heads 4
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 24 --seed 42 --num_heads 6
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 32 --seed 42 --num_heads 8
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 48 --seed 42 --num_heads 12
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 64 --seed 42 --num_heads 16
+--model_type NDA --dataset BAC_OG --hp_name d_model --d_model 128 --seed 42 --num_heads 32
+--model_type NDA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 1 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 2 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 3 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name d_ff_multiplier --d_ff_multiplier 4 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_layers --num_layers 1 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_layers --num_layers 2 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_layers --num_layers 4 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_layers --num_layers 6 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_layers --num_layers 8 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0002 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0004 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.0008 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.001 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name learning_rate --learning_rate 0.005 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name dropout --dropout 0 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name dropout --dropout 0.2 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name dropout --dropout 0.5 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name dropout --dropout 0.8 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_heads --num_heads 8 --seed 42
+--model_type NDA --dataset BAC_OG --hp_name num_heads --num_heads 16 --seed 42
