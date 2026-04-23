@@ -230,9 +230,9 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
 
     optimizer    = torch.optim.AdamW(model.parameters(),
                                      lr=params["learning_rate"],
-                                     weight_decay=FIXED["weight_decay"])
+                                     weight_decay=params["weight_decay"])
     lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
-                       optimizer, gamma=FIXED["lr_decay_factor"])
+                       optimizer, gamma=params["lr_decay"])
 
     backup_path  = os.path.join(trial_dir, "training")
     os.makedirs(backup_path, exist_ok=True)
@@ -313,6 +313,8 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
         "num_heads":       params["num_heads"],
         "learning_rate":   params["learning_rate"],
         "dropout":         params["dropout"],
+        "weight_decay":    params["weight_decay"],
+        "lr_decay":        params["lr_decay"],
         # Test metrics
         "test_MAE_ttne_stand":       float(inf[0]),
         "test_MAE_ttne_minutes":     float(inf[1]),
