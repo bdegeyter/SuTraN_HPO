@@ -1,23 +1,26 @@
 """
-Phase 1 runner — one-at-a-time HP sensitivity analysis.
+Phase 2 runner — LHS-seeded random search over all HPs jointly.
 
-Accepts (model_type, dataset, seed) via CLI. Loops through every HP
-value in HP_VALUES, trains with all other HPs at their defaults,
-and evaluates on the test set.
-
-Data is loaded ONCE and reused across all trials.
+A single LHS plan of NUM_TRIALS configurations is generated once (using
+LHS_SEED) and split evenly across NUM_PARTS SLURM jobs.  Each job is
+identified by --part (0-indexed).  Trial indices in saved results are
+*global* (0 … NUM_TRIALS-1), so results from different parts can be
+merged into a single summary without index collisions.
 
 Usage (from project root):
-    python -m hpo.phase1.run --model_type DA --dataset BAC_adj --seed 42
+    python -m hpo.phase2.run \\
+        --model_type DA --dataset BPIC17_DR --seed 42 --part 0 \\
+        --data_dir /scratch/... --results_dir /scratch/.../results
 """
 
 import argparse
-import os
-import sys
-import glob
 import csv
+import glob
+import math
+import os
 import pickle
 import random
+import sys
 
 import numpy as np
 import pandas as pd
@@ -28,7 +31,10 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__f
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from hpo.phase1.config import DATASET_REGISTRY, FIXED, HP_VALUES, DEFAULTS
+from hpo.phase2.config import (
+    DATASET_REGISTRY, FIXED, HP_SEARCH_SPACE,
+    LHS_SEED, NUM_TRIALS, NUM_PARTS,
+)
 
 
 # ---------------------------------------------------------------
@@ -36,38 +42,105 @@ from hpo.phase1.config import DATASET_REGISTRY, FIXED, HP_VALUES, DEFAULTS
 # ---------------------------------------------------------------
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Phase 1 HPO runner")
+    p = argparse.ArgumentParser(description="Phase 2 LHS random search runner")
     p.add_argument("--model_type",  required=True, choices=["DA", "NDA"])
     p.add_argument("--dataset",     required=True, choices=list(DATASET_REGISTRY.keys()))
-    p.add_argument("--seed",        type=int, default=42)
+    p.add_argument("--seed",        type=int, default=42,
+                   help="Seed used for model training (separate from LHS seed).")
+    p.add_argument("--part",        type=int, required=True,
+                   help="Which slice of the LHS plan to run (0-indexed, 0 … NUM_PARTS-1).")
     p.add_argument("--data_dir",    type=str, default="")
     p.add_argument("--results_dir", type=str, default="")
-    p.add_argument(
-        "--only", nargs="+", default=None, metavar="HP=VALUE",
-        help="Run only specific hp=value pairs, e.g. --only d_model=256 weight_decay=0.01"
-    )
     return p.parse_args()
+
+
+# ---------------------------------------------------------------
+# LHS plan generation
+# ---------------------------------------------------------------
+
+def _sample_hp(hp_name: str, spec, unit: float):
+    """
+    Map a LHS unit-interval sample *unit* ∈ [0, 1) to an HP value.
+
+    *spec* is either:
+      - a list  → categorical: pick the corresponding element
+      - a dict  → continuous range with keys 'type', 'low', 'high'
+                  type 'float' : linear interpolation
+                  type 'log'   : log-uniform interpolation
+                  type 'int'   : integer-uniform (inclusive on both ends)
+    """
+    if isinstance(spec, list):
+        idx = min(int(math.floor(unit * len(spec))), len(spec) - 1)
+        return spec[idx]
+
+    kind = spec["type"]
+    low, high = spec["low"], spec["high"]
+
+    if kind == "float":
+        return low + unit * (high - low)
+    elif kind == "log":
+        return float(np.exp(np.log(low) + unit * (np.log(high) - np.log(low))))
+    elif kind == "int":
+        # inclusive range [low, high]
+        return int(round(low + unit * (high - low)))
+    else:
+        raise ValueError(f"Unknown HP type '{kind}' for '{hp_name}'")
+
+
+def generate_lhs_configs(num_trials: int, lhs_seed: int, search_space: dict) -> list:
+    """
+    Return a list of *num_trials* HP dicts sampled via Latin Hypercube
+    Sampling over *search_space*.
+
+    Each entry in *search_space* can be a list (categorical) or a dict
+    with keys 'type' ('float'/'log'/'int'), 'low', 'high' (continuous).
+
+    Requires scipy >= 1.7.
+    """
+    try:
+        from scipy.stats.qmc import LatinHypercube
+    except ImportError as exc:
+        raise ImportError(
+            "scipy >= 1.7 is required for LHS sampling.  "
+            "Install it with: pip install scipy"
+        ) from exc
+
+    hp_names = list(search_space.keys())
+    n_dims   = len(hp_names)
+
+    sampler = LatinHypercube(d=n_dims, seed=lhs_seed)
+    sample  = sampler.random(n=num_trials)          # shape: (num_trials, n_dims)
+
+    configs = []
+    for row in sample:
+        config = {
+            hp_name: _sample_hp(hp_name, search_space[hp_name], row[i])
+            for i, hp_name in enumerate(hp_names)
+        }
+        configs.append(config)
+
+    return configs
 
 
 # ---------------------------------------------------------------
 # Seed
 # ---------------------------------------------------------------
 
-def set_seed(seed):
+def set_seed(seed: int):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.benchmark     = False
 
 
 # ---------------------------------------------------------------
-# Data loading
+# Data loading (identical to phase 1)
 # ---------------------------------------------------------------
 
-def load_metadata(log_name, data_dir):
+def load_metadata(log_name: str, data_dir: str) -> dict:
     base = os.path.join(data_dir, log_name)
 
     def _pkl(name):
@@ -100,7 +173,7 @@ def load_metadata(log_name, data_dir):
     return meta
 
 
-def load_tensors(log_name, data_dir, model_type, meta):
+def load_tensors(log_name: str, data_dir: str, model_type: str, meta: dict):
     base = os.path.join(data_dir, log_name)
 
     train_dataset = torch.load(os.path.join(base, "train_tensordataset.pt"))
@@ -123,7 +196,7 @@ def load_tensors(log_name, data_dir, model_type, meta):
 # Model creation
 # ---------------------------------------------------------------
 
-def create_model(model_type, meta, params):
+def create_model(model_type: str, meta: dict, params: dict):
     if model_type == "DA":
         from SuTraN.SuTraN import SuTraN
         return SuTraN(
@@ -160,7 +233,7 @@ def create_model(model_type, meta, params):
 # Best-epoch selection (rank-sum on RRT MAE + DL similarity)
 # ---------------------------------------------------------------
 
-def select_best_epoch(backup_path):
+def select_best_epoch(backup_path: str) -> int:
     df = pd.read_csv(os.path.join(backup_path, "backup_results.csv"))
     df["rrt_rank"] = df["RRT - mintues MAE validation"].rank(method="min").astype(int)
     df["dl_rank"]  = df["Activity suffix: 1-DL (validation)"].rank(method="min", ascending=False).astype(int)
@@ -172,30 +245,28 @@ def select_best_epoch(backup_path):
 # Path helpers
 # ---------------------------------------------------------------
 
-def get_trial_dir(results_dir, model_type, dataset, hp_name, hp_value, seed):
-    """results/sutran_DA/BAC_OG/individual/d_model/d_model_64/seed_42"""
+def get_trial_dir(results_dir: str, model_type: str, dataset: str, trial_idx: int) -> str:
+    """results/sutran_DA/BAC_OG/lhs_search/trial_042"""
     return os.path.join(
-        results_dir, f"sutran_{model_type}", dataset, "individual",
-        hp_name, f"{hp_name}_{hp_value}", f"seed_{seed}",
+        results_dir, f"sutran_{model_type}", dataset,
+        "lhs_search", f"trial_{trial_idx:04d}",
     )
 
 
-def get_summary_csv(results_dir, model_type, dataset):
-    """results/sutran_DA/BAC_OG/individual/summary.csv"""
+def get_summary_csv(results_dir: str, model_type: str, dataset: str) -> str:
+    """results/sutran_DA/BAC_OG/lhs_search/summary.csv"""
     return os.path.join(
-        results_dir, f"sutran_{model_type}", dataset, "individual", "summary.csv",
+        results_dir, f"sutran_{model_type}", dataset, "lhs_search", "summary.csv",
     )
 
 
 # ---------------------------------------------------------------
-# Rebuild summary CSV from all results.pkl files
+# Rebuild summary CSV from all results.pkl files on disk
 # ---------------------------------------------------------------
 
-def rebuild_summary(results_dir, model_type, dataset):
-    individual_dir = os.path.join(
-        results_dir, f"sutran_{model_type}", dataset, "individual",
-    )
-    pattern = os.path.join(individual_dir, "*", "*", "*", "results.pkl")
+def rebuild_summary(results_dir: str, model_type: str, dataset: str):
+    lhs_dir  = os.path.join(results_dir, f"sutran_{model_type}", dataset, "lhs_search")
+    pattern  = os.path.join(lhs_dir, "trial_*", "results.pkl")
     pkl_files = sorted(glob.glob(pattern))
 
     if not pkl_files:
@@ -206,7 +277,10 @@ def rebuild_summary(results_dir, model_type, dataset):
         with open(pkl_path, "rb") as f:
             rows.append(pickle.load(f))
 
-    summary_path = os.path.join(individual_dir, "summary.csv")
+    # Sort by global trial index so the CSV is always ordered
+    rows.sort(key=lambda r: r["trial_idx"])
+
+    summary_path = os.path.join(lhs_dir, "summary.csv")
     with open(summary_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
@@ -217,9 +291,10 @@ def rebuild_summary(results_dir, model_type, dataset):
 # Single trial: train + evaluate
 # ---------------------------------------------------------------
 
-def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
-              params, hp_name, hp_value, seed, trial_dir):
-    """Train one config, evaluate on test set, save and return result dict."""
+def run_trial(model_type: str, meta: dict,
+              train_dataset, val_dataset, test_dataset,
+              params: dict, trial_idx: int, seed: int, trial_dir: str) -> dict:
+    """Train one LHS config, evaluate on test, save and return result dict."""
 
     results_pkl = os.path.join(trial_dir, "results.pkl")
     if os.path.exists(results_pkl):
@@ -227,9 +302,12 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
             return pickle.load(f)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    set_seed(seed)
+    # Use a per-trial seed derived from the base seed and the global trial index
+    # so that different parts produce independently seeded (but reproducible) runs.
+    trial_seed = seed + trial_idx
+    set_seed(trial_seed)
 
-    model     = create_model(model_type, meta, params)
+    model = create_model(model_type, meta, params)
     model.to(device)
 
     optimizer    = torch.optim.AdamW(model.parameters(),
@@ -304,9 +382,8 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
     best_row = val_df[val_df["epoch"] == best_epoch].iloc[0]
 
     result = {
-        "hp_name":     hp_name,
-        "hp_value":    hp_value,
-        "seed":        seed,
+        "trial_idx":   trial_idx,
+        "seed":        trial_seed,
         "best_epoch":  best_epoch,
         "n_epochs":    len(val_df),
         # HPs used
@@ -339,7 +416,7 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
         "val_MAE_rrt_minutes":  float(best_row["RRT - mintues MAE validation"]),
     }
 
-    with open(os.path.join(trial_dir, "results.pkl"), "wb") as f:
+    with open(results_pkl, "wb") as f:
         pickle.dump(result, f)
 
     with open(os.path.join(test_results_path, "prefix_length_results_dict.pkl"), "wb") as f:
@@ -356,6 +433,10 @@ def run_trial(model_type, meta, train_dataset, val_dataset, test_dataset,
 
 def main():
     args = parse_args()
+
+    if not (0 <= args.part < NUM_PARTS):
+        raise ValueError(f"--part must be in [0, {NUM_PARTS - 1}], got {args.part}")
+
     log_name = DATASET_REGISTRY[args.dataset]
 
     repo_root   = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -364,98 +445,67 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
-    print(f"Running: {args.model_type} | {args.dataset} ({log_name}) | seed={args.seed}")
+    print(f"Running phase 2: {args.model_type} | {args.dataset} ({log_name})")
+    print(f"  base seed={args.seed}  part={args.part}/{NUM_PARTS}  "
+          f"total_trials={NUM_TRIALS}  lhs_seed={LHS_SEED}")
     print()
 
-    # Load data once
+    # Generate the full LHS plan (same regardless of --part)
+    all_configs = generate_lhs_configs(NUM_TRIALS, LHS_SEED, HP_SEARCH_SPACE)
+
+    # Determine the global trial indices this part is responsible for
+    trials_per_part = NUM_TRIALS // NUM_PARTS
+    start_idx = args.part * trials_per_part
+    end_idx   = start_idx + trials_per_part if args.part < NUM_PARTS - 1 else NUM_TRIALS
+    part_indices = list(range(start_idx, end_idx))
+
+    print(f"This part covers global trial indices {start_idx} … {end_idx - 1} "
+          f"({len(part_indices)} trials)\n")
+
+    # Load data once for this part
     meta = load_metadata(log_name, data_dir)
     train_dataset, val_dataset, test_dataset = load_tensors(
         log_name, data_dir, args.model_type, meta)
     print(f"Data loaded: {meta['num_activities']} activities, "
           f"{len(train_dataset)} training instances\n")
 
-    total = 1 + sum(
-        1 for hp, vals in HP_VALUES.items()
-        for v in vals if v != DEFAULTS[hp]
-    )
-    done = 0
+    # Run trials
+    for local_i, trial_idx in enumerate(part_indices):
+        raw_config = all_configs[trial_idx]
 
-    # --- Train base model ---
-    base_params = dict(DEFAULTS)
-    base_params["d_ff"] = base_params["d_model"] * base_params["d_ff_multiplier"]
-    base_dir = get_trial_dir(results_dir, args.model_type, args.dataset,
-                             "base", "default", args.seed)
-    done += 1
-    print(f"{'='*60}")
-    print(f"[{done}/{total}]  BASE MODEL (paper defaults)")
-    print(f"  d_model={base_params['d_model']}  d_ff={base_params['d_ff']}  "
-          f"heads={base_params['num_heads']}  layers={base_params['num_layers']}  "
-          f"lr={base_params['learning_rate']}  dropout={base_params['dropout']}")
-    print(f"{'='*60}")
+        # Derive dependent HPs
+        params = dict(raw_config)
+        params["num_heads"] = max(1, params["d_model"] // 4)
+        params["d_ff"]      = params["d_model"] * params["d_ff_multiplier"]
 
-    base_result = run_trial(
-        args.model_type, meta, train_dataset, val_dataset, test_dataset,
-        base_params, "base", "default", args.seed, base_dir)
+        trial_dir = get_trial_dir(results_dir, args.model_type, args.dataset, trial_idx)
+        cached    = " (cached)" if os.path.exists(os.path.join(trial_dir, "results.pkl")) else ""
 
-    print(f"  Test: MAE_rrt={base_result['test_MAE_rrt_minutes']:.2f} min | "
-          f"DL_sim={base_result['test_DL_similarity']:.4f}\n")
+        print(f"\n{'='*60}")
+        print(f"[part {args.part} | {local_i + 1}/{len(part_indices)}] "
+              f"global trial {trial_idx}{cached}")
+        print(f"  d_model={params['d_model']}  d_ff={params['d_ff']}  "
+              f"heads={params['num_heads']}  layers={params['num_layers']}")
+        print(f"  lr={params['learning_rate']}  dropout={params['dropout']}  "
+              f"wd={params['weight_decay']}  lr_decay={params['lr_decay']}")
+        print(f"{'='*60}")
 
-    # Parse --only filter into a set of (hp_name, hp_value) tuples
-    only_set = None
-    if args.only:
-        only_set = set()
-        for pair in args.only:
-            hp_name_f, hp_val_str = pair.split("=", 1)
-            # coerce to the same type as values in HP_VALUES
-            ref = HP_VALUES[hp_name_f][0]
-            try:
-                hp_val_f = type(ref)(hp_val_str)
-            except (ValueError, TypeError):
-                hp_val_f = hp_val_str
-            only_set.add((hp_name_f, hp_val_f))
+        result = run_trial(
+            args.model_type, meta, train_dataset, val_dataset, test_dataset,
+            params, trial_idx, args.seed, trial_dir,
+        )
 
-    # --- Sweep each HP ---
-    for hp_name, values in HP_VALUES.items():
-        for hp_value in values:
-            if hp_value == DEFAULTS[hp_name]:
-                continue
-            if only_set is not None and (hp_name, hp_value) not in only_set:
-                continue
+        print(f"  Test: MAE_rrt={result['test_MAE_rrt_minutes']:.2f} min | "
+              f"DL_sim={result['test_DL_similarity']:.4f}")
 
-            done += 1
-            params = dict(DEFAULTS)
-            params[hp_name] = hp_value
-
-            if hp_name == "d_model":
-                params["num_heads"] = max(1, hp_value // 4)
-
-            params["d_ff"] = params["d_model"] * params["d_ff_multiplier"]
-
-            td = get_trial_dir(results_dir, args.model_type, args.dataset,
-                               hp_name, hp_value, args.seed)
-            cached = " (cached)" if os.path.exists(os.path.join(td, "results.pkl")) else ""
-
-            print(f"\n{'='*60}")
-            print(f"[{done}/{total}]  {hp_name} = {hp_value}{cached}")
-            print(f"  d_model={params['d_model']}  d_ff={params['d_ff']}  "
-                  f"heads={params['num_heads']}  layers={params['num_layers']}  "
-                  f"lr={params['learning_rate']}  dropout={params['dropout']}")
-            print(f"{'='*60}")
-
-            result = run_trial(
-                args.model_type, meta, train_dataset, val_dataset, test_dataset,
-                params, hp_name, hp_value, args.seed, td)
-
-            print(f"  Test: MAE_rrt={result['test_MAE_rrt_minutes']:.2f} min | "
-                  f"DL_sim={result['test_DL_similarity']:.4f}")
-
-    # --- Rebuild summary CSV ---
+    # Rebuild summary from all trials that are on disk (may be partial if other parts
+    # haven't finished yet — that's fine, it will be called again by rebuild_summary.py)
     rebuild_summary(results_dir, args.model_type, args.dataset)
     summary_csv = get_summary_csv(results_dir, args.model_type, args.dataset)
 
     print(f"\n{'='*60}")
-    print(f"All {total} trials complete!")
-    print(f"Summary: {summary_csv}")
+    print(f"Part {args.part} complete ({len(part_indices)} trials run).")
+    print(f"Partial/full summary: {summary_csv}")
     print(f"{'='*60}")
 
 

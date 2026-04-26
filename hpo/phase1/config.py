@@ -35,9 +35,7 @@ HP_VALUES = {
     "num_layers":      [1, 2, 4, 6, 8, 16],
     "learning_rate":   [0.0002, 0.0004, 0.0008, 0.001, 0.005],
     "dropout":         [0, 0.2, 0.5, 0.8],
-    # values around the default (0.0001) + extremes to stress-test the model
     "weight_decay":    [0, 0.00001, 0.0001, 0.001, 0.01],
-    # values around the default (0.96) + extremes (no decay vs aggressive decay)
     "lr_decay":        [0.90, 0.93, 0.96, 0.98, 1.0],
 }
 

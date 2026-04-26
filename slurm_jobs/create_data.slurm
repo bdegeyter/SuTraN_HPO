@@ -15,7 +15,7 @@
 
 source /data/leuven/383/vsc38329/miniconda3/etc/profile.d/conda.sh
 conda activate sutran_env
-cd /scratch/leuven/383/vsc38329/Thesis_Final
+cd /scratch/leuven/383/vsc38329/Thesis_Final_new
 
 echo "Creating all datasets..."
 mkdir -p datasets

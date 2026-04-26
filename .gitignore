@@ -4,6 +4,9 @@ bpic17_with_loops.csv
 BPIC19.csv
 luggage_log.csv
 
+# Results
+results/
+
 # Preprocessed tensor output folders
 BPIC_17/
 BPIC_17_DR/

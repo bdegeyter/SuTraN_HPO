@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name="create_all_data"
 #SBATCH --cluster="wice"
-#SBATCH --partition="batch"
+#SBATCH --partition="gpu_a100_debug"
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
@@ -15,8 +15,9 @@
 
 source /data/leuven/383/vsc38329/miniconda3/etc/profile.d/conda.sh
 conda activate sutran_env
-cd /scratch/leuven/383/vsc38329/Thesis_Final
+cd /scratch/leuven/383/vsc38329/Thesis_Final_new
 
 echo "Creating all datasets..."
-python -m hpo.create_all_data
+mkdir -p datasets
+python data_creation/create_all_data.py
 echo "Done!"
