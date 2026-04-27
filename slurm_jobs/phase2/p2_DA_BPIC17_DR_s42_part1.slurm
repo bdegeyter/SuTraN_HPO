@@ -8,9 +8,9 @@
 #SBATCH --gpus-per-node=1
 #SBATCH --account="lp_lirisnlp"
 #SBATCH --mem=16G
-#SBATCH --time=60:00:00
+#SBATCH --time=72:00:00
 #SBATCH --mail-type="FAIL"
-#SBATCH --mail-user="bert.degeyter@student.kuleuven.be"
+#SBATCH --mail-user="bert.geyter@student.kuleuven.be"
 #SBATCH --chdir="/scratch/leuven/383/vsc38329/Thesis_Final"
 #SBATCH --output="/data/leuven/383/vsc38329/phase2_logs/%x.o%A"
 #SBATCH --error="/data/leuven/383/vsc38329/phase2_logs/%x.e%A"

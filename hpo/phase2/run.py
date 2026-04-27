@@ -313,8 +313,7 @@ def run_trial(model_type: str, meta: dict,
     optimizer    = torch.optim.AdamW(model.parameters(),
                                      lr=params["learning_rate"],
                                      weight_decay=params["weight_decay"])
-    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(
-                       optimizer, gamma=params["lr_decay"])
+    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=FIXED["lr_decay"])
 
     backup_path  = os.path.join(trial_dir, "training")
     os.makedirs(backup_path, exist_ok=True)
@@ -395,7 +394,6 @@ def run_trial(model_type: str, meta: dict,
         "learning_rate":   params["learning_rate"],
         "dropout":         params["dropout"],
         "weight_decay":    params["weight_decay"],
-        "lr_decay":        params["lr_decay"],
         # Test metrics
         "test_MAE_ttne_stand":       float(inf[0]),
         "test_MAE_ttne_minutes":     float(inf[1]),
@@ -487,7 +485,7 @@ def main():
         print(f"  d_model={params['d_model']}  d_ff={params['d_ff']}  "
               f"heads={params['num_heads']}  layers={params['num_layers']}")
         print(f"  lr={params['learning_rate']}  dropout={params['dropout']}  "
-              f"wd={params['weight_decay']}  lr_decay={params['lr_decay']}")
+              f"wd={params['weight_decay']}")
         print(f"{'='*60}")
 
         result = run_trial(
