@@ -7,6 +7,12 @@ luggage_log.csv
 # Results
 results/
 
+# Generated per-user — run generate_slurm.py locally to recreate
+slurm_jobs/
+
+# Temporary analysis outputs — not part of the codebase
+result_graphs/
+
 # Preprocessed tensor output folders
 BPIC_17/
 BPIC_17_DR/
@@ -28,3 +34,4 @@ __pycache__/
 
 # VS Code
 .vscode/
+.claude/
