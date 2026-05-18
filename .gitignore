@@ -14,13 +14,13 @@ slurm_jobs/
 result_graphs/
 
 # Preprocessed tensor output folders
-BPIC_17/
-BPIC_17_DR/
-BPIC_19/
-BAC_OG/
-BAC_adj/
-BAC_dep/
-BAC/
+/BPIC_17/
+/BPIC_17_DR/
+/BPIC_19/
+/BAC_OG/
+/BAC_adj/
+/BAC_dep/
+/BAC/
 
 # Python
 __pycache__/
