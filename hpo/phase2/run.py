@@ -496,8 +496,9 @@ def main():
         print(f"  Test: MAE_rrt={result['test_MAE_rrt_minutes']:.2f} min | "
               f"DL_sim={result['test_DL_similarity']:.4f}")
 
-    # Rebuild summary from all trials that are on disk (may be partial if other parts
-    # haven't finished yet — that's fine, it will be called again by rebuild_summary.py)
+    # Rebuild summary from all trials currently on disk.  If other parts have not
+    # finished yet the summary will be partial; rebuild_summary.py can be re-run
+    # after all parts complete to produce the final, full summary.
     rebuild_summary(results_dir, args.model_type, args.dataset)
     summary_csv = get_summary_csv(results_dir, args.model_type, args.dataset)
 

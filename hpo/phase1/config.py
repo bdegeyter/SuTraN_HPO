@@ -11,7 +11,6 @@ DATASET_REGISTRY = {
     "BPIC19":    "BPIC_19",
     "BAC_adj":   "BAC_adj",
     "BAC_OG":    "BAC_OG",
-    "BAC_dep":   "BAC_dep",
 }
 
 # ---------------------------------------------------------------------------

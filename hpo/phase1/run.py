@@ -1,5 +1,5 @@
 """
-Phase 1 runner — one-at-a-time HP sensitivity analysis.
+One-at-a-time HP analysis.
 
 Accepts (model_type, dataset, seed) via CLI. Loops through every HP
 value in HP_VALUES, trains with all other HPs at their defaults,

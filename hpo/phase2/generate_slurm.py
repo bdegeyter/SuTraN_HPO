@@ -31,8 +31,8 @@ from hpo.phase2.config import DATASET_REGISTRY, NUM_PARTS
 
 OUTPUT_DIR = os.path.join(_REPO_ROOT, "slurm_jobs", "phase2")
 
-SCRATCH = "/scratch/leuven/383/vsc38329/Thesis_Final"
-DATA    = "/data/leuven/383/vsc38329"
+SCRATCH = "/path/to/scratch/project"
+DATA    = "/path/to/data"
 
 # ---------------------------------------------------------------------------
 # Edit this list to specify which (model_type, dataset, seed) combinations
@@ -54,16 +54,16 @@ SLURM_TEMPLATE = """\
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus-per-node=1
-#SBATCH --account="lp_lirisnlp"
+#SBATCH --account="your_account"
 #SBATCH --mem=16G
 #SBATCH --time=72:00:00
 #SBATCH --mail-type="FAIL"
-#SBATCH --mail-user="bert.geyter@student.kuleuven.be"
+#SBATCH --mail-user="user@example.com"
 #SBATCH --chdir="{scratch}"
 #SBATCH --output="{data}/phase2_logs/%x.o%A"
 #SBATCH --error="{data}/phase2_logs/%x.e%A"
 
-source /data/leuven/383/vsc38329/miniconda3/etc/profile.d/conda.sh
+source {data}/miniconda3/etc/profile.d/conda.sh
 conda activate sutran_env
 
 python -m hpo.phase2.run \\

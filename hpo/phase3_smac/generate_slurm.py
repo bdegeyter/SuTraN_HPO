@@ -31,8 +31,8 @@ from hpo.phase3_smac.config import DATASET_REGISTRY
 
 OUTPUT_DIR = os.path.join(_REPO_ROOT, "slurm_jobs", "phase3_smac")
 
-SCRATCH = "/scratch/leuven/383/vsc38329/Thesis_Final"
-DATA    = "/data/leuven/383/vsc38329"
+SCRATCH = "/path/to/scratch/project"
+DATA    = "/path/to/data"
 
 # Add / remove (model_type, dataset, seed) entries here as needed.
 JOBS = [
@@ -44,22 +44,22 @@ JOBS = [
 SLURM_TEMPLATE = """\
 #!/usr/bin/env bash
 #SBATCH --job-name="p3_{model}_{dataset}_s{seed}"
-#SBATCH --cluster="wice"
-#SBATCH --partition="gpu"
+#SBATCH --cluster="genius"
+#SBATCH --partition="gpu_v100"
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus-per-node=1
-#SBATCH --account="lp_lirisnlp"
+#SBATCH --account="your_account"
 #SBATCH --mem=16G
 #SBATCH --time=72:00:00
 #SBATCH --mail-type="FAIL"
-#SBATCH --mail-user="bert.geyter@student.kuleuven.be"
+#SBATCH --mail-user="user@example.com"
 #SBATCH --chdir="{scratch}"
 #SBATCH --output="{data}/phase3_logs/%x.o%A"
 #SBATCH --error="{data}/phase3_logs/%x.e%A"
 
-source /data/leuven/383/vsc38329/miniconda3/etc/profile.d/conda.sh
+source {data}/miniconda3/etc/profile.d/conda.sh
 conda activate sutran_env
 
 python -m hpo.phase3_smac.run \\
@@ -96,7 +96,7 @@ def main():
     print("  sbatch --dependency=afterany:JOBID slurm_jobs/phase3_smac/<script>.slurm")
     print()
     print("Remember to create the log directory on the cluster first:")
-    print(f"  mkdir -p {DATA}/phase3_logs")
+    print(f"  mkdir -p /path/to/data/phase3_logs")
 
 
 if __name__ == "__main__":

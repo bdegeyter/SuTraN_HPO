@@ -15,8 +15,8 @@ if _REPO_ROOT not in sys.path:
 # No global hpo/config needed — all config lives in hpo/phase1/config.py
 OUTPUT_DIR = os.path.join(_REPO_ROOT, "slurm_jobs", "phase1")
 
-SCRATCH = "/scratch/leuven/383/vsc38329/Thesis_Final"
-DATA    = "/data/leuven/383/vsc38329"
+SCRATCH = "/path/to/scratch/project"
+DATA    = "/path/to/data"
 
 # ---------------------------------------------------------------------------
 # Edit this list to specify which jobs to generate
@@ -39,16 +39,16 @@ SLURM_TEMPLATE = """\
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --gpus-per-node=1
-#SBATCH --account="lp_lirisnlp"
+#SBATCH --account="your_account"
 #SBATCH --mem=16G
 #SBATCH --time=72:00:00
 #SBATCH --mail-type="FAIL"
-#SBATCH --mail-user="bert.degeyter@student.kuleuven.be"
+#SBATCH --mail-user="user@example.com"
 #SBATCH --chdir="{scratch}"
 #SBATCH --output="{data}/phase1_logs/%x.o%A"
 #SBATCH --error="{data}/phase1_logs/%x.e%A"
 
-source /data/leuven/383/vsc38329/miniconda3/etc/profile.d/conda.sh
+source {data}/miniconda3/etc/profile.d/conda.sh
 conda activate sutran_env
 
 python -m hpo.phase1.run \\
@@ -63,7 +63,7 @@ python -m hpo.phase1.run \\
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     # Note: phase1_logs/ must exist on the cluster before submitting:
-    #   mkdir -p /data/leuven/383/vsc38329/phase1_logs
+    #   mkdir -p /path/to/data/phase1_logs
 
     generated = []
     for model, dataset, seed in JOBS:
